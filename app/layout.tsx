@@ -1,46 +1,45 @@
-import type { Metadata } from 'next';
-import { GeistMono } from 'geist/font/mono';
-import { GeistSans } from 'geist/font/sans';
-import { Analytics } from '@vercel/analytics/react';
-import { Toaster } from '@/components/ui/toaster';
-import './globals.css';
+import type { Metadata } from "next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "@/components/ui/toaster";
+import "./globals.css";
 
-import { AI } from './action';
-import { Sidebar } from '@/components/header';
-import { Providers } from '@/components/providers';
+import { AI } from "./action";
+import { Sidebar } from "@/components/sidebar";
+import { Providers } from "@/components/providers";
 
 const meta = {
-  title: 'answers, how they should be displayed.',
-  description:
-    'anwser engine built by developers digest',
+  title: "answers, how they should be displayed.",
+  description: "anwser engine built by developers digest",
 };
 export const metadata: Metadata = {
   ...meta,
   title: {
-    default: 'answer website',
+    default: "answer website",
     template: `%s - answer website`,
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
   },
   twitter: {
     ...meta,
-    card: 'summary_large_image',
-    site: '@vercel',
+    card: "summary_large_image",
+    site: "@vercel",
   },
   openGraph: {
     ...meta,
-    locale: 'en-US',
-    type: 'website',
+    locale: "en-US",
+    type: "website",
   },
 };
 
 export const viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
   ],
 };
 
@@ -51,7 +50,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
       <body
         className={`font-sans antialiased ${GeistSans.variable} ${GeistMono.variable}`}
       >
@@ -65,19 +67,21 @@ export default function RootLayout({
           >
             <div className="flex flex-row min-h-screen">
               <div className="w-64 bg-gray-200 dark:bg-gray-900">
+                {" "}
+                {/* Width of sidebar */}
                 <Sidebar />
-                
               </div>
-              <main className="flex flex-col flex-1 bg-muted/50 dark:bg-slate-800 px-4">
+              <main className="flex-1 bg-muted/50 dark:bg-slate-800 p-4">
+                {" "}
+                {/* Flex grow for main content */}
                 {children}
               </main>
             </div>
           </Providers>
         </AI>
-        <Analytics />
       </body>
     </html>
   );
 }
 
-export const runtime = 'edge';
+export const runtime = "edge";
