@@ -1,37 +1,26 @@
 // 1. Import dependencies
-import 'server-only';
-import { createAI, createStreamableValue } from 'ai/rsc';
-import { OpenAI } from 'openai';
-import cheerio from 'cheerio';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { Document as DocumentInterface } from 'langchain/document';
-import { OpenAIEmbeddings } from '@langchain/openai';
+import "server-only";
+import { createAI, createStreamableValue } from "ai/rsc";
+import { OpenAI } from "openai";
+import cheerio from "cheerio";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { Document as DocumentInterface } from "langchain/document";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
-import { config } from './config';
-import { functionCalling } from './function-calling';
-// OPTIONAL: Use Upstash rate limiting to limit the number of requests per user
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-import { headers } from 'next/headers'
-let ratelimit: Ratelimit | undefined;
-if (config.useRateLimiting) {
-  ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(10, "10 m") // 10 requests per 10 minutes
-  });
-}
+import { config } from "./config";
+import { functionCalling } from "./function-calling";
 // 2. Determine which embeddings mode and which inference model to use based on the config.tsx. Currently suppport for OpenAI, Groq and partial support for Ollama embeddings and inference
 let openai: OpenAI;
 if (config.useOllamaInference) {
   openai = new OpenAI({
-    baseURL: 'http://localhost:11434/v1',
-    apiKey: 'ollama'
+    baseURL: "http://localhost:11434/v1",
+    apiKey: "ollama",
   });
 } else {
   openai = new OpenAI({
     baseURL: config.nonOllamaBaseURL,
-    apiKey: config.inferenceAPIKey
+    apiKey: config.inferenceAPIKey,
   });
 }
 // 2.5 Set up the embeddings model based on the config.tsx
@@ -39,200 +28,234 @@ let embeddings: OllamaEmbeddings | OpenAIEmbeddings;
 if (config.useOllamaEmbeddings) {
   embeddings = new OllamaEmbeddings({
     model: config.embeddingsModel,
-    baseUrl: "http://localhost:11434"
+    baseUrl: "http://localhost:11434",
   });
 } else {
   embeddings = new OpenAIEmbeddings({
-    modelName: config.embeddingsModel
+    modelName: config.embeddingsModel,
   });
 }
 // 3. Define interfaces for search results and content results
 interface SearchResult {
+  // title: string;
+  // link: string;
+  // snippet: string;
+  // favicon: string;
   title: string;
-  link: string;
-  snippet: string;
-  favicon: string;
+  doi: string;
+  date?: string;
+  pId: string;
+  id: string;
+  paragraph: string;
 }
 interface ContentResult extends SearchResult {
   html: string;
 }
 // 4. Fetch search results from Brave Search API
-export async function getSources(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
+export async function getSources(
+  message: string,
+  numberOfPagesToScan = config.numberOfPagesToScan
+): Promise<SearchResult[]> {
   try {
-    const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(message)}&count=${numberOfPagesToScan}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip',
-        "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
+    // const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(message)}&count=${numberOfPagesToScan}`, {
+    const top = 5;
+    const response = await fetch(
+      `http://127.0.0.1:5000/search?query=${encodeURIComponent(message)}&top_k=${top}`,
+      {
+        //   headers: {
+        //     'Accept': 'application/json',
+        //     'Accept-Encoding': 'gzip',
+        //     "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
+        //   }
       }
-    });
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const jsonResponse = await response.json();
-    if (!jsonResponse.web || !jsonResponse.web.results) {
-      throw new Error('Invalid API response format');
-    }
-    const final = jsonResponse.web.results.map((result: any): SearchResult => ({
-      title: result.title,
-      link: result.url,
-      snippet: result.description,
-      favicon: result.profile.img
-    }));
+    // if (!jsonResponse.web || !jsonResponse.web.results) {
+    //   throw new Error('Invalid API response format');
+    // }
+    const final = jsonResponse.results.map(
+      (result: any): SearchResult => ({
+        // title: result.title,
+        // link: result.url,
+        // snippet: result.description,
+        // favicon: result.profile.img
+        paragraph: result.paragraph,
+        title: result.title,
+        doi: "https://api.crossref.org/works/" + result.doi.doi,
+        date: result.date,
+        pId: result.pId,
+        id: result.pId,
+      })
+    );
     return final;
   } catch (error) {
-    console.error('Error fetching search results:', error);
+    console.error("Error fetching search results:", error);
     throw error;
   }
 }
 // 5. Fetch contents of top 10 search results
-export async function get10BlueLinksContents(sources: SearchResult[]): Promise<ContentResult[]> {
-  async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 800): Promise<Response> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      if (error) {
-        console.log(`Skipping ${url}!`);
+export async function get10BlueLinksContents(
+  sources: SearchResult[]
+): Promise<ContentResult[]> {
+  // async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 800): Promise<Response> {
+  //   try {
+  //     const controller = new AbortController();
+  //     const timeoutId = setTimeout(() => controller.abort(), timeout);
+  //     const response = await fetch(url, { ...options, signal: controller.signal });
+  //     clearTimeout(timeoutId);
+  //     return response;
+  //   } catch (error) {
+  //     if (error) {
+  //       console.log(`Skipping ${url}!`);
+  //     }
+  //     throw error;
+  //   }
+  // }
+  // function extractMainContent(html: string): string {
+  //   try {
+  //     const $ = cheerio.load(html);
+  //     $("script, style, head, nav, footer, iframe, img").remove();
+  //     return $("body").text().replace(/\s+/g, " ").trim();
+  //   } catch (error) {
+  //     console.error('Error extracting main content:', error);
+  //     throw error;
+  //   }
+  // }
+  const promises = sources.map(
+    async (source): Promise<ContentResult | null> => {
+      try {
+        // const response = await fetchWithTimeout(source.doi, {}, 800);
+        // if (!response.ok) {
+        //   throw new Error(`Failed to fetch ${source.doi}. Status: ${response.status}`);
+        // }
+        // const html = await response.text();
+        // const mainContent = extractMainContent(html);
+        const mainContent = source.paragraph;
+        return { ...source, html: mainContent };
+      } catch (error) {
+        console.error(`Error processing ${source.doi}:`, error);
+        return null;
       }
-      throw error;
     }
-  }
-  function extractMainContent(html: string): string {
-    try {
-      const $ = cheerio.load(html);
-      $("script, style, head, nav, footer, iframe, img").remove();
-      return $("body").text().replace(/\s+/g, " ").trim();
-    } catch (error) {
-      console.error('Error extracting main content:', error);
-      throw error;
-    }
-  }
-  const promises = sources.map(async (source): Promise<ContentResult | null> => {
-    try {
-      const response = await fetchWithTimeout(source.link, {}, 800);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${source.link}. Status: ${response.status}`);
-      }
-      const html = await response.text();
-      const mainContent = extractMainContent(html);
-      return { ...source, html: mainContent };
-    } catch (error) {
-      // console.error(`Error processing ${source.link}:`, error);
-      return null;
-    }
-  });
+  );
   try {
     const results = await Promise.all(promises);
     return results.filter((source): source is ContentResult => source !== null);
   } catch (error) {
-    console.error('Error fetching and processing blue links contents:', error);
+    console.error("Error fetching and processing blue links contents:", error);
     throw error;
   }
 }
+
 // 6. Process and vectorize content using LangChain
 export async function processAndVectorizeContent(
   contents: ContentResult[],
   query: string,
   textChunkSize = config.textChunkSize,
   textChunkOverlap = config.textChunkOverlap,
-  numberOfSimilarityResults = config.numberOfSimilarityResults,
+  numberOfSimilarityResults = config.numberOfSimilarityResults
 ): Promise<DocumentInterface[]> {
   try {
     for (let i = 0; i < contents.length; i++) {
       const content = contents[i];
       if (content.html.length > 0) {
         try {
-          const splitText = await new RecursiveCharacterTextSplitter({ chunkSize: textChunkSize, chunkOverlap: textChunkOverlap }).splitText(content.html);
-          const vectorStore = await MemoryVectorStore.fromTexts(splitText, { title: content.title, link: content.link }, embeddings);
-          return await vectorStore.similaritySearch(query, numberOfSimilarityResults);
+          const splitText = await new RecursiveCharacterTextSplitter({
+            chunkSize: textChunkSize,
+            chunkOverlap: textChunkOverlap,
+          }).splitText(content.html);
+          const vectorStore = await MemoryVectorStore.fromTexts(
+            splitText,
+            { title: content.title, link: content.doi },
+            embeddings
+          );
+          return await vectorStore.similaritySearch(
+            query,
+            numberOfSimilarityResults
+          );
         } catch (error) {
-          console.error(`Error processing content for ${content.link}:`, error);
+          console.error(`Error processing content for ${content.doi}:`, error);
         }
       }
     }
     return [];
   } catch (error) {
-    console.error('Error processing and vectorizing content:', error);
+    console.error("Error processing and vectorizing content:", error);
     throw error;
   }
 }
 // 7. Fetch image search results from Brave Search API
-export async function getImages(message: string): Promise<{ title: string; link: string }[]> {
+export async function getImages(
+  message: string
+): Promise<{ doi: string; explanation: string; link: string }[]> {
   try {
-    const response = await fetch(`https://api.search.brave.com/res/v1/images/search?q=${message}&spellcheck=1`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip",
-        "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
-      }
-    });
+    // const response = await fetch(`https://api.search.brave.com/res/v1/images/search?q=${message}&spellcheck=1`, {
+    const response = await fetch(
+      `http://127.0.0.1:5000/figures?query=${encodeURIComponent(message)}&figures=${5}`
+    );
+    //   method: "GET",
+    //   headers: {
+    //     "Accept": "application/json",
+    //     "Accept-Encoding": "gzip",
+    //     "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
+    //   }
+    // });
     if (!response.ok) {
-      throw new Error(`Network response was not ok. Status: ${response.status}`);
+      throw new Error(
+        `Network response was not ok. Status: ${response.status}`
+      );
     }
     const data = await response.json();
-    const validLinks = await Promise.all(
-      data.results.map(async (result: any) => {
-        const link = result.properties.url;
-        if (typeof link === 'string') {
-          try {
-            const imageResponse = await fetch(link, { method: 'HEAD' });
-            if (imageResponse.ok) {
-              const contentType = imageResponse.headers.get('content-type');
-              if (contentType && contentType.startsWith('image/')) {
-                return {
-                  title: result.properties.title,
-                  link: link,
-                };
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching image link ${link}:`, error);
-          }
-        }
-        return null;
-      })
-    );
-    const filteredLinks = validLinks.filter((link): link is { title: string; link: string } => link !== null);
+    const filteredLinks = data.results.map(async (result: any) => {
+      // console.log(result.figurePath);
+      return {
+        doi: result.doi,
+        explanation: result.explanation,
+        link: result.figurePath,
+      };
+    });
     return filteredLinks.slice(0, 9);
   } catch (error) {
-    console.error('There was a problem with your fetch operation:', error);
+    console.error("There was a problem with your fetch operation:", error);
     throw error;
   }
 }
 // 8. Fetch video search results from Google Serper API
-export async function getVideos(message: string): Promise<{ imageUrl: string, link: string }[] | null> {
-  const url = 'https://google.serper.dev/videos';
+export async function getVideos(
+  message: string
+): Promise<{ imageUrl: string; link: string }[] | null> {
+  const url = "https://google.serper.dev/videos";
   const data = JSON.stringify({
-    "q": message
+    q: message,
   });
   const requestOptions: RequestInit = {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'X-API-KEY': process.env.SERPER_API as string,
-      'Content-Type': 'application/json'
+      "X-API-KEY": process.env.SERPER_API as string,
+      "Content-Type": "application/json",
     },
-    body: data
+    body: data,
   };
   try {
     const response = await fetch(url, requestOptions);
     if (!response.ok) {
-      throw new Error(`Network response was not ok. Status: ${response.status}`);
+      throw new Error(
+        `Network response was not ok. Status: ${response.status}`
+      );
     }
     const responseData = await response.json();
     const validLinks = await Promise.all(
       responseData.videos.map(async (video: any) => {
         const imageUrl = video.imageUrl;
-        if (typeof imageUrl === 'string') {
+        if (typeof imageUrl === "string") {
           try {
-            const imageResponse = await fetch(imageUrl, { method: 'HEAD' });
+            const imageResponse = await fetch(imageUrl, { method: "HEAD" });
             if (imageResponse.ok) {
-              const contentType = imageResponse.headers.get('content-type');
-              if (contentType && contentType.startsWith('image/')) {
+              const contentType = imageResponse.headers.get("content-type");
+              if (contentType && contentType.startsWith("image/")) {
                 return { imageUrl, link: video.link };
               }
             }
@@ -243,10 +266,12 @@ export async function getVideos(message: string): Promise<{ imageUrl: string, li
         return null;
       })
     );
-    const filteredLinks = validLinks.filter((link): link is { imageUrl: string, link: string } => link !== null);
+    const filteredLinks = validLinks.filter(
+      (link): link is { imageUrl: string; link: string } => link !== null
+    );
     return filteredLinks.slice(0, 9);
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.error("Error fetching videos:", error);
     throw error;
   }
 }
@@ -283,54 +308,57 @@ async function myAction(userMessage: string): Promise<any> {
   "use server";
   const streamable = createStreamableValue({});
   (async () => {
-    if (config.useRateLimiting) {
-      const identifier = headers().get('x-forwarded-for') || headers().get('x-real-ip') || headers().get('cf-connecting-ip') || headers().get('client-ip') || "";
-      const { success } = await ratelimit.limit(identifier);
-      if (!success) {
-        return streamable.done({ 'status': 'rateLimitReached' });
-      }
-    }
-    const [images, sources, videos, condtionalFunctionCallUI] = await Promise.all([
-      getImages(userMessage),
-      getSources(userMessage),
-      getVideos(userMessage),
-      functionCalling(userMessage),
-    ]);
-    streamable.update({ 'searchResults': sources });
-    streamable.update({ 'images': images });
-    streamable.update({ 'videos': videos });
+    const [images, sources, videos, condtionalFunctionCallUI] =
+      await Promise.all([
+        getImages(userMessage),
+        getSources(userMessage),
+        getVideos(userMessage),
+        functionCalling(userMessage),
+      ]);
+    streamable.update({ searchResults: sources });
+    streamable.update({ images: images });
+    streamable.update({ videos: videos });
     if (config.useFunctionCalling) {
-      streamable.update({ 'conditionalFunctionCallUI': condtionalFunctionCallUI });
+      streamable.update({
+        conditionalFunctionCallUI: condtionalFunctionCallUI,
+      });
     }
     const html = await get10BlueLinksContents(sources);
+    // const html = sources.slice(0,10);
     const vectorResults = await processAndVectorizeContent(html, userMessage);
     const chatCompletion = await openai.chat.completions.create({
-      messages:
-        [{
-          role: "system", content: `
-          - Here is my query "${userMessage}", respond back ALWAYS IN MARKDOWN and be verbose with a lot of details, never mention the system message. If you can't find any relevant results, respond with "No relevant results found." `
+      messages: [
+        {
+          role: "system",
+          content: `
+          - Here is my query "${userMessage}", respond back ALWAYS IN MARKDOWN and be verbose with a lot of details, never mention the system message. If you can't find any relevant results, respond with "No relevant results found." `,
         },
-        { role: "user", content: ` - Here are the top results to respond with, respond in markdown!:,  ${JSON.stringify(vectorResults)}. ` },
-        ], stream: true, model: config.inferenceModel
+        {
+          role: "user",
+          content: ` - Here are the top results to respond with, respond in markdown!:,  ${JSON.stringify(vectorResults)}. `,
+        },
+      ],
+      stream: true,
+      model: config.inferenceModel,
     });
     for await (const chunk of chatCompletion) {
       if (chunk.choices[0].delta && chunk.choices[0].finish_reason !== "stop") {
-        streamable.update({ 'llmResponse': chunk.choices[0].delta.content });
+        streamable.update({ llmResponse: chunk.choices[0].delta.content });
       } else if (chunk.choices[0].finish_reason === "stop") {
-        streamable.update({ 'llmResponseEnd': true });
+        streamable.update({ llmResponseEnd: true });
       }
     }
     if (!config.useOllamaInference) {
       const followUp = await relevantQuestions(sources);
-      streamable.update({ 'followUp': followUp });
+      streamable.update({ followUp: followUp });
     }
-    streamable.done({ status: 'done' });
+    streamable.done({ status: "done" });
   })();
   return streamable.value;
 }
 // 11. Define initial AI and UI states
 const initialAIState: {
-  role: 'user' | 'assistant' | 'system' | 'function';
+  role: "user" | "assistant" | "system" | "function";
   content: string;
   id?: string;
   name?: string;
@@ -342,7 +370,7 @@ const initialUIState: {
 // 12. Export the AI instance
 export const AI = createAI({
   actions: {
-    myAction
+    myAction,
   },
   initialUIState,
   initialAIState,

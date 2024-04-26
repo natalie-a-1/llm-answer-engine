@@ -29,9 +29,15 @@ import RateLimit from '@/components/answer/RateLimit';
 
 // 2. Set up types
 interface SearchResult {
-  favicon: string;
-  link: string;
+  // favicon: string;
+  // link: string;
+  // title: string;
   title: string;
+  doi: string;
+  date?: string;
+  pId: string;
+  id: string;
+  paragraph: string;
 }
 interface Message {
   id: number;
@@ -64,7 +70,10 @@ interface StreamMessage {
   ticker?: string;
 }
 interface Image {
-  link: string;
+  // link: string;
+  doi: string,
+  explanation: string,
+  link: string,
 }
 interface Video {
   link: string;

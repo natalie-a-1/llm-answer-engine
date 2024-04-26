@@ -2,11 +2,17 @@
 import { useState, useEffect } from 'react';
 
 // 2. Define the 'SearchResult' interface with properties for 'favicon', 'link', and 'title'
-export interface SearchResult {
-    favicon: string;
-    link: string;
+interface SearchResult {
+    // favicon: string;
+    // link: string;
+    // title: string;
     title: string;
-}
+    doi: string;
+    date?: string;
+    pId: string;
+    id: string;
+    paragraph: string;
+  }
 
 // 3. Define the 'SearchResultsComponentProps' interface with a 'searchResults' property of type 'SearchResult[]'
 export interface SearchResultsComponentProps {
@@ -83,12 +89,12 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
                                         <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
                                     )}
                                     <img
-                                        src={result.favicon}
+                                        // src={result.favicon}
                                         alt="favicon"
                                         className={`w-5 h-5 ${loadedFavicons[index] ? 'block' : 'hidden'}`}
                                         onLoad={() => handleFaviconLoad(index)}
                                     />
-                                    <a href={result.link} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold truncate dark:text-gray-200 dark:hover:text-white text-gray-700 hover:text-black">
+                                    <a href={result.doi} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold truncate dark:text-gray-200 dark:hover:text-white text-gray-700 hover:text-black">
                                         {result.title}
                                     </a>
                                 </div>
@@ -103,7 +109,8 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
                                 {!isExpanded ? (
                                     <>
                                         {searchResults.slice(0, 3).map((result, index) => (
-                                            <img key={`favicon-${index}`} src={result.favicon} alt="favicon" className="w-4 h-4" />
+                                            <img key={`favicon-${index}`} alt="favicon" className="w-4 h-4" />
+                                            // <img key={`favicon-${index}`} src={result.favicon} alt="favicon" className="w-4 h-4" />
                                         ))}
                                         <span className="text-sm font-semibold dark:text-gray-200 text-gray-700">View more</span>
                                     </>
