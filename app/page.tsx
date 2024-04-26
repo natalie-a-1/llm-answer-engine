@@ -280,10 +280,10 @@ export default function Page() {
         </div>
       )}
       <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4`}>
-        <div className="mx-auto max-w-xl sm:px-4 ">
+        <div className="max-w-4xl sm:px-4 mx-auto">
           {messages.length === 0 && (
-            <InitialQueries questions={['How is apple\'s stock doing these days?', 'Where can I get the best bagel in NYC?', 'I want to buy a mens patagonia vest']} handleFollowUpClick={handleFollowUpClick} />
-          )}
+            <InitialQueries questions={['What is liver cancer and how does it effect people?', 'How do scientists use excipients for vaccines?', 'Inactive ingredient moelcule mackeup.', 'What is liver cancer and how does it effect people?']} handleFollowUpClick={handleFollowUpClick} />
+            )}
           <form
             ref={formRef}
             onSubmit={async (e: FormEvent<HTMLFormElement>) => {
@@ -298,7 +298,7 @@ export default function Page() {
               if (!value) return;
             }}
           >
-            <div className="relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-slate-800 bg-gray-100 rounded-md border sm:px-2">
+            <div className="shadow-lg relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-slate-800 bg-gray-100 rounded-md border sm:px-2">
               <Textarea
                 ref={inputRef}
                 tabIndex={0}
