@@ -35,6 +35,7 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
 
     // 8. Define the 'visibleResults' variable to hold the search results to be displayed based on the 'isExpanded' state
     const visibleResults = isExpanded ? searchResults : searchResults.slice(0, 3);
+    console.log(searchResults);
 
     // 9. Define the 'handleFaviconLoad' function to update the 'loadedFavicons' state when a favicon is loaded
     const handleFaviconLoad = (index: number) => {
@@ -72,7 +73,7 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
     return (
         <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
-                <h2 className="text-lg font-semibold flex-grow dark:text-white text-black">Sources</h2>
+                {/* <h2 className="text-lg font-semibold flex-grow dark:text-white text-black">Sources</h2> */}
                 {/* <img src="./brave.png" alt="brave logo" className="w-6 h-6" /> */}
             </div>
             <div className="flex flex-wrap my-2">

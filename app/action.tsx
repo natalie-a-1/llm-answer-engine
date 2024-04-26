@@ -84,7 +84,7 @@ export async function getSources(
         // favicon: result.profile.img
         paragraph: result.paragraph,
         title: result.title,
-        doi: "https://api.crossref.org/works/" + result.doi.doi,
+        doi: `https://doi.org/${result.doi}`,
         date: result.date,
         pId: result.pId,
         id: result.pId,
@@ -315,6 +315,7 @@ async function myAction(userMessage: string): Promise<any> {
         getVideos(userMessage),
         functionCalling(userMessage),
       ]);
+      console.log(sources);
     streamable.update({ searchResults: sources });
     streamable.update({ images: images });
     streamable.update({ videos: videos });
