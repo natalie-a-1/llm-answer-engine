@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 
 import { AI } from './action';
-import { Header } from '@/components/header';
+import { Sidebar } from '@/components/header';
 import { Providers } from '@/components/providers';
 
 const meta = {
@@ -63,9 +63,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4">
+            <div className="flex flex-row min-h-screen">
+              <div className="w-64 bg-gray-200 dark:bg-gray-900">
+                <Sidebar />
+                
+              </div>
+              <main className="flex flex-col flex-1 bg-muted/50 dark:bg-slate-800 px-4">
                 {children}
               </main>
             </div>
