@@ -1,12 +1,15 @@
 // 1. Import the 'useState' and 'useEffect' hooks from React
 import { useState, useEffect } from "react";
 import { IconPlus, IconClose } from "@/components/ui/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Export } from "@phosphor-icons/react";
 
 // 2. Define the 'SearchResult' interface with properties for 'favicon', 'link', and 'title'
 interface SearchResult {
-  // favicon: string;
-  // link: string;
-  // title: string;
   title: string;
   doi: string;
   date?: string;
@@ -26,31 +29,26 @@ const SearchResultsComponent = ({
 }: {
   searchResults: SearchResult[];
 }) => {
-  // 5. Use the 'useState' hook to manage the 'isExpanded' and 'loadedFavicons' state
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [loadedFavicons, setLoadedFavicons] = useState<boolean[]>([]);
-
-  // 6. Use the 'useEffect' hook to initialize the 'loadedFavicons' state based on the 'searchResults' length
-  useEffect(() => {
-    setLoadedFavicons(Array(searchResults.length).fill(false));
-  }, [searchResults]);
-
-  // 7. Define the 'toggleExpansion' function to toggle the 'isExpanded' state
-  const toggleExpansion = () => setIsExpanded(!isExpanded);
-
-  // 8. Define the 'visibleResults' variable to hold the search results to be displayed based on the 'isExpanded' state
-  const visibleResults = isExpanded ? searchResults : searchResults.slice(0, 3);
-  console.log(searchResults);
-
-  // 9. Define the 'handleFaviconLoad' function to update the 'loadedFavicons' state when a favicon is loaded
-  const handleFaviconLoad = (index: number) => {
-    setLoadedFavicons((prevLoadedFavicons) => {
-      const updatedLoadedFavicons = [...prevLoadedFavicons];
-      updatedLoadedFavicons[index] = true;
-      return updatedLoadedFavicons;
-    });
-  };
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [showMore, setShowMore] = useState(false);
+
+  useEffect(() => {
+    if (!showMore && selectedSources.length) {
+      setSelectedSources([]); // Optionally clear selection when collapsed
+    }
+  }, [showMore, selectedSources.length]);
+
+  const handleSourceToggle = (id: string) => {
+    setSelectedSources((prev) =>
+      prev.includes(id) ? prev.filter((sourceId) => sourceId !== id) : [...prev, id]
+    );
+  };
+
+    // TODO: Implement exporting sources logic
+  const exportSelectedSources = () => {
+    console.log("Exporting sources:", selectedSources);
+    // Placeholder for actual export logic
+  };
 
   // 10. Define the 'SearchResultsSkeleton' component to render a loading skeleton
   const SearchResultsSkeleton = () => (
@@ -72,31 +70,27 @@ const SearchResultsComponent = ({
   );
   // 11. Render the 'SearchResultsComponent'
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mt-4">
+    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mt-4 w-full">
       <div className="flex items-center">
         <h2 className="text-lg font-semibold flex-grow text-black dark:text-white">
           Sources
         </h2>
-        {searchResults.length > 3 && (
-          <div className="flex justify-center ml-2">
-            <button
-              className="text-black dark:text-white focus:outline-none"
-              onClick={() => setShowMore(!showMore)}
-            >
-              {showMore ? <IconClose /> : <IconPlus />}
-            </button>
-          </div>
-        )}
+        <IconPlus className="w-4 h-4 cursor-pointer text-gray-500 dark:text-gray-400" onClick={() => setShowMore(true)} />
       </div>
-      <div className="mx-1 transition-all duration-500">
+      <div
+        className={`flex flex-wrap mx-1 transition-all duration-500 max-h-[500px] overflow-hidden`}
+      >
         {searchResults.length === 0 ? (
-          <SearchResultsSkeleton />
+          <div>No results found.</div>
         ) : (
           searchResults
-            .slice(0, showMore ? searchResults.length : 3)
-            .map((result, index) => (
-              <div key={`searchResult-${index}`} className="p-2 w-full">
-                <div className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg h-full">
+            .slice(0, showMore ? searchResults.length : 5)
+            .map((result) => (
+              <div
+                key={result.id}
+                className="transition ease-in-out hover:-translate-y-1 hover:scale-105 duration-200 cursor-pointer p-2 w-full"
+              >
+                <div className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg h-full overflow-hidden">
                   <a
                     href={result.doi}
                     target="_blank"
@@ -108,6 +102,35 @@ const SearchResultsComponent = ({
                 </div>
               </div>
             ))
+        )}
+
+        {showMore && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-black opacity-10 transition-opacity" onClick={() => setShowMore(false)}></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
+              <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Source Results</h2>
+                <IconClose className="w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition duration-150 ease-in-out" onClick={() => setShowMore(false)} />
+              </div>
+              <div className="overflow-y-auto p-6 space-y-6 max-h-[70vh]">
+                {searchResults.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-6">
+                    <input
+                      type="checkbox"
+                      checked={selectedSources.includes(item.id)}
+                      onChange={() => handleSourceToggle(item.id)}
+                      className="form-checkbox h-5 w-5 text-blue-600 mr-4"
+                    />
+                    <div className="flex-grow">
+                      <a href={item.doi} target="_blank" rel="noopener noreferrer" className="font-bold text-xl mb-2 hover:underline text-gray-900 dark:text-gray-100">{item.title}</a>
+                      <p className="text-gray-500 dark:text-gray-400 text-base mb-2">{item.date}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{item.paragraph}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

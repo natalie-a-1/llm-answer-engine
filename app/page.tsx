@@ -309,13 +309,7 @@ export default function Page() {
                 )}
               </div>
               {/* Secondary content area */}
-              <div className="w-full md:w-1/4 md:pl-2">
-                {message.shopping && message.shopping.length > 0 && (
-                  <ShoppingComponent
-                    key={`shopping-${index}`}
-                    shopping={message.shopping}
-                  />
-                )}
+              <div className="flex flex-col w-full md:w-1/4 md:pl-2 overflow-hidden">
                 {message.searchResults && (
                   <SearchResultsComponent
                     key={`searchResults-${index}`}
@@ -332,6 +326,12 @@ export default function Page() {
                   <ImagesComponent
                     key={`images-${index}`}
                     images={message.images}
+                  />
+                )}
+                {message.shopping && message.shopping.length > 0 && (
+                  <ShoppingComponent
+                    key={`shopping-${index}`}
+                    shopping={message.shopping}
                   />
                 )}
                 {message.places && message.places.length > 0 && (
@@ -384,12 +384,9 @@ export default function Page() {
                       disabled={inputValue === ""}
                     >
                       <UploadSimple />
-                      <span className="sr-only">Send message</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    Send message
-                  </TooltipContent>
+                  <TooltipContent>Upload</TooltipContent>
                 </Tooltip>
               </div>
               <Textarea
@@ -420,9 +417,7 @@ export default function Page() {
                       <span className="sr-only">Send message</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    Send message
-                  </TooltipContent>
+                  <TooltipContent>Send message</TooltipContent>
                 </Tooltip>
               </div>
             </div>
