@@ -2,8 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
-import { ChatCircleText } from "@phosphor-icons/react";
-import { Gear } from "@phosphor-icons/react";
+import { ChatCircleText, Gear, Pulse } from "@phosphor-icons/react";
 
 export function Sidebar() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -25,14 +24,10 @@ export function Sidebar() {
         <div className="flex flex-col bg-gray-800 text-white h-full">
           {" "}
           <div className="p-4 flex items-center space-x-2">
-            <span className="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-500 dark:text-slate-400">
+            < Pulse width="25" height="25" className="dark:text-slate-400" />
+            <span className="text-center uppercase leading-tighttext-lg sm:text-xl lg:text-2xl text-slate-500 dark:text-slate-400">
               DAVAI
             </span>
-            <img
-              src="https://tailwindui.com/img/logos/mark.svg?color=indigo&amp;shade=500"
-              alt="Your Company"
-              className="h-8"
-            />
           </div>
           {/* Chat history */}
           <nav className="flex-grow">
@@ -65,23 +60,22 @@ export function Sidebar() {
               </li>
             </ul>
           </nav>
-
           {/* Settings Button */}
           <div className="mt-auto flex justify-between p-4 items-center w-full">
-                        {/* New Chat Button */}
-                        <Button
+            {/* New Chat Button */}
+            <Button
               variant="outline"
               asChild
               onClick={() => console.log("clicked")}
             >
               <a className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-black dark:text-white font-semibold py-2 px-4 rounded shadow">
-              < ChatCircleText />
+                <ChatCircleText />
               </a>
             </Button>
-            
+
             <Button variant="outline" asChild onClick={toggleModal}>
               <a className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-black dark:text-white font-semibold py-2 px-4 rounded shadow">
-                < Gear />
+                <Gear />
               </a>
             </Button>
           </div>
@@ -184,18 +178,54 @@ const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               <option value="groq-gemma">Groq: Gemma</option>
             </select>
           </div>
-          {/* <div className="mb-4">
-              <label className="block mb-2 font-semibold">Show Sources in UI</label>
+
+          <div className="mb-4 flex items-center space-x-4">
+            <div  className="pr-12">
+              <label className="font-semibold">Shopping Search</label>
               <div className="relative inline-block w-10 mr-2 align-middle select-none">
                 <input
                   type="checkbox"
                   checked={settings.toggleSetting}
-                  onChange={(e) => handleSettingsChange('toggleSetting', e.target.checked)}
+                  onChange={(e) =>
+                    handleSettingsChange("toggleSetting", e.target.checked)
+                  }
                   className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
                 />
                 <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
               </div>
-            </div> */}
+            </div>
+
+            <div  className="pr-12">
+              <label className="font-semibold">Maps Search</label>
+              <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.toggleSetting}
+                  onChange={(e) =>
+                    handleSettingsChange("toggleSetting", e.target.checked)
+                  }
+                  className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
+                />
+                <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+              </div>
+            </div>
+
+            <div>
+              <label className="font-semibold">Chart Search</label>
+              <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.toggleSetting}
+                  onChange={(e) =>
+                    handleSettingsChange("toggleSetting", e.target.checked)
+                  }
+                  className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
+                />
+                <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+              </div>
+            </div>
+          </div>
+
           <div className="mb-4">
             <div className="mb-4">
               <label className="block mb-2 font-semibold">

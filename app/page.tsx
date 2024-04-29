@@ -36,10 +36,12 @@ const MapComponent = dynamic(() => import("@/components/answer/Map"), {
 import MapDetails from "@/components/answer/MapDetails";
 import ShoppingComponent from "@/components/answer/ShoppingComponent";
 import FinancialChart from "@/components/answer/FinancialChart";
-import { ArrowUp } from "@phosphor-icons/react";
-import { UploadSimple } from "@phosphor-icons/react";
+import { ArrowUp, XCircle, UploadSimple, Pulse } from "@phosphor-icons/react";
 // OPTIONAL: Use Upstash rate limiting to limit the number of requests per user
 import RateLimit from "@/components/answer/RateLimit";
+
+// For uploading images to llm
+import imageCompression from "browser-image-compression";
 
 // 2. Set up types
 interface SearchResult {
@@ -138,6 +140,57 @@ export default function Page() {
   const [messages, setMessages] = useState<Message[]>([]);
   // 6. Set up state for the CURRENT LLM response (for displaying in the UI while streaming)
   const [currentLlmResponse, setCurrentLlmResponse] = useState("");
+
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  const handleFilesChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const fileList = Array.from(event.target.files || []).slice(0, 5);
+    const compressedFiles: File[] = [];
+    const fileNames: string[] = [];
+    const newImagePreviews: string[] = [];
+
+    for (const file of fileList) {
+      if (["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+        try {
+          const compressedFile = await imageCompression(file, options);
+          compressedFiles.push(compressedFile);
+          fileNames.push(compressedFile.name + " (compressed)");
+          newImagePreviews.push(URL.createObjectURL(compressedFile));
+        } catch (error) {
+          console.error("Compression Error:", error);
+        }
+      } else {
+        compressedFiles.push(file);
+        fileNames.push(file.name);
+        newImagePreviews.push(URL.createObjectURL(file));
+      }
+    }
+
+    setFiles(compressedFiles);
+    setImagePreviews(newImagePreviews);
+    // setInputValue(prev => `${prev} ${fileNames.join(', ')}`);
+  };
+
+  const removeImagePreview = (index: number) => {
+    const filteredFiles = files.filter((_, idx) => idx !== index);
+    const filteredPreviews = imagePreviews.filter((_, idx) => idx !== index);
+    setFiles(filteredFiles);
+    setImagePreviews(filteredPreviews);
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
   // 7. Set up handler for when the user clicks on the follow up button
   const handleFollowUpClick = useCallback(async (question: string) => {
     setCurrentLlmResponse("");
@@ -177,6 +230,9 @@ export default function Page() {
     const messageToSend = inputValue.trim();
     if (!messageToSend) return;
     setInputValue("");
+    setFiles([]);
+    setImagePreviews([]);
+    // TODO: Implement sending logic here
     await handleSubmit(messageToSend);
   };
   const handleUserMessageSubmission = async (
@@ -346,19 +402,25 @@ export default function Page() {
         className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4`}
       >
         <div className="max-w-4xl sm:px-4 mx-auto">
-          {/* <div className="max-w-4xl sm:px-4 mx-auto flex justify-center items-center h-screen">
-        <div className="text-center text-4xl font-bold uppercase">DAVAI</div>
-          </div> */}
           {messages.length === 0 && (
-            <InitialQueries
-              questions={[
-                "What is liver cancer and how does it effect people?",
-                "How do scientists use excipients for vaccines?",
-                "Inactive ingredient moelcule mackeup.",
-                "What is liver cancer and how does it effect people?",
-              ]}
-              handleFollowUpClick={handleFollowUpClick}
-            />
+            <>
+              <div className="max-w-4xl sm:px-4 mx-auto flex flex-col justify-end items-center h-screen pb-[10rem]">
+                <Pulse width="45" height="45" />
+                <div className="pl-2 text-center text-4xl uppercase leading-tight">
+                  DAVAI
+                </div>
+              </div>
+
+              <InitialQueries
+                questions={[
+                  "What is liver cancer and how does it effect people?",
+                  "How do scientists use excipients for vaccines?",
+                  "Inactive ingredient moelcule mackeup.",
+                  "What is liver cancer and how does it effect people?",
+                ]}
+                handleFollowUpClick={handleFollowUpClick}
+              />
+            </>
           )}
           <form
             ref={formRef}
@@ -375,25 +437,63 @@ export default function Page() {
             }}
           >
             <div className="shadow-lg relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-slate-800 bg-gray-100 rounded-md border sm:px-2">
-              <div className="absolute left-4 top-4">
+              <div className="flex overflow-x-auto">
+                {imagePreviews.map((src, index) => (
+                  <div key={index} className="relative group mx-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="absolute right-0 top-0 opacity-0 group-hover:opacity-100"
+                          onClick={() => removeImagePreview(index)}
+                          type="button" // Ensure this is 'button' to prevent form submission
+                          variant="link"
+                          size="icon"
+                        >
+                          <XCircle fill="black" width="25" height="25" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remove</TooltipContent>
+                    </Tooltip>
+                    <img
+                      src={src}
+                      alt="Preview"
+                      style={{ width: "70px", height: "70px" }}
+                      className="rounded-md border"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="relative left-4 top-11">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      type="submit"
+                      onClick={triggerFileSelect}
+                      type="button" // Ensure this is 'button' to prevent form submission
+                      variant="link"
                       size="icon"
-                      disabled={inputValue === ""}
                     >
-                      <UploadSimple />
+                      <UploadSimple width="20" height="20" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Upload</TooltipContent>
                 </Tooltip>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFilesChange}
+                  accept="image/*,.pdf,.mol"
+                  style={{ display: "none" }} // Keep the input hidden
+                />
               </div>
+              <div className="flex overflow-x-auto"></div>
               <Textarea
-                ref={inputRef}
                 tabIndex={0}
-                onKeyDown={onKeyDown}
-                placeholder="Send a message."
+                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) =>
+                  setInputValue(e.currentTarget.value)
+                }
+                placeholder="Send a message..."
                 className="w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pl-[60px] pr-[60px]"
                 autoFocus
                 spellCheck={false}
@@ -402,14 +502,16 @@ export default function Page() {
                 name="message"
                 rows={1}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setInputValue(e.target.value)
+                }
               />
               <ChatScrollAnchor trackVisibility={true} />
-              <div className="absolute right-4 top-4">
+              <div className="absolute right-4 top-10">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      type="submit"
+                      type="button"
                       size="icon"
                       disabled={inputValue === ""}
                     >

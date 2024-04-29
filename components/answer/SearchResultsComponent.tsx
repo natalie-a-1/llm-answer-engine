@@ -81,7 +81,7 @@ const SearchResultsComponent = ({
         className={`flex flex-wrap mx-1 transition-all duration-500 max-h-[500px] overflow-hidden`}
       >
         {searchResults.length === 0 ? (
-          <div>No results found.</div>
+          < SearchResultsSkeleton />
         ) : (
           searchResults
             .slice(0, showMore ? searchResults.length : 5)
@@ -109,7 +109,7 @@ const SearchResultsComponent = ({
             <div className="fixed inset-0 bg-black opacity-10 transition-opacity" onClick={() => setShowMore(false)}></div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
               <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Source Results</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Sources</h2>
                 <IconClose className="w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition duration-150 ease-in-out" onClick={() => setShowMore(false)} />
               </div>
               <div className="overflow-y-auto p-6 space-y-6 max-h-[70vh]">
@@ -124,7 +124,7 @@ const SearchResultsComponent = ({
                     <div className="flex-grow">
                       <a href={item.doi} target="_blank" rel="noopener noreferrer" className="font-bold text-xl mb-2 hover:underline text-gray-900 dark:text-gray-100">{item.title}</a>
                       <p className="text-gray-500 dark:text-gray-400 text-base mb-2">{item.date}</p>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{item.paragraph}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{item.paragraph.length > 200 ? `${item.paragraph.substring(0, 200)}...` : item.paragraph}</p>
                     </div>
                   </div>
                 ))}
