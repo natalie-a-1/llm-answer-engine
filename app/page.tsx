@@ -37,6 +37,7 @@ import MapDetails from "@/components/answer/MapDetails";
 import ShoppingComponent from "@/components/answer/ShoppingComponent";
 import FinancialChart from "@/components/answer/FinancialChart";
 import { ArrowUp } from "@phosphor-icons/react";
+import { UploadSimple } from "@phosphor-icons/react";
 // OPTIONAL: Use Upstash rate limiting to limit the number of requests per user
 import RateLimit from "@/components/answer/RateLimit";
 
@@ -345,7 +346,7 @@ export default function Page() {
         className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4`}
       >
         <div className="max-w-4xl sm:px-4 mx-auto">
-        {/* <div className="max-w-4xl sm:px-4 mx-auto flex justify-center items-center h-screen">
+          {/* <div className="max-w-4xl sm:px-4 mx-auto flex justify-center items-center h-screen">
         <div className="text-center text-4xl font-bold uppercase">DAVAI</div>
           </div> */}
           {messages.length === 0 && (
@@ -374,12 +375,29 @@ export default function Page() {
             }}
           >
             <div className="shadow-lg relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-slate-800 bg-gray-100 rounded-md border sm:px-2">
+              <div className="absolute left-4 top-4">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={inputValue === ""}
+                    >
+                      <UploadSimple />
+                      <span className="sr-only">Send message</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Send message
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Textarea
                 ref={inputRef}
                 tabIndex={0}
                 onKeyDown={onKeyDown}
                 placeholder="Send a message."
-                className="w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pr-[45px]"
+                className="w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pl-[60px] pr-[60px]"
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
@@ -390,7 +408,7 @@ export default function Page() {
                 onChange={(e) => setInputValue(e.target.value)}
               />
               <ChatScrollAnchor trackVisibility={true} />
-              <div className="absolute right-5 top-4">
+              <div className="absolute right-4 top-4">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -402,7 +420,9 @@ export default function Page() {
                       <span className="sr-only">Send message</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Send message</TooltipContent>
+                  <TooltipContent>
+                    Send message
+                  </TooltipContent>
                 </Tooltip>
               </div>
             </div>
