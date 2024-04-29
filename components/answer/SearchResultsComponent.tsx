@@ -105,6 +105,9 @@ const SearchResultsComponent = ({
         )}
 
         {showMore && (
+          <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40 bg-black opacity-80"></div>
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="fixed inset-0 bg-black opacity-10 transition-opacity" onClick={() => setShowMore(false)}></div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
@@ -131,6 +134,7 @@ const SearchResultsComponent = ({
               </div>
             </div>
           </div>
+          </>
         )}
       </div>
     </div>
