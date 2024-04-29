@@ -84,7 +84,8 @@ import imageCompression from "browser-image-compression";
 // 2. Set up types
 interface SearchResult {
   title: string;
-  doi: string;
+  doi?: string;
+  citation: string;
   date?: string;
   pId: string;
   id: string;

@@ -37,17 +37,15 @@ if (config.useOllamaEmbeddings) {
 }
 // 3. Define interfaces for search results and content results
 interface SearchResult {
-  // title: string;
-  // link: string;
-  // snippet: string;
-  // favicon: string;
   title: string;
-  doi: string;
+  doi?: string;
+  citation: string;
   date?: string;
   pId: string;
   id: string;
   paragraph: string;
 }
+
 interface ContentResult extends SearchResult {
   html: string;
 }
@@ -73,7 +71,7 @@ export async function getSources(
         paragraph: result.paragraph,
         title: result.title,
         // TODO: Fix doi link
-        doi: `https://doi.org/${result.doi}`,
+        citation: result.doi,
         date: result.date,
         pId: result.pId,
         id: `id_${Date.now()}_${++idCounter}`,
@@ -171,33 +169,34 @@ export async function processAndVectorizeContent(
   }
 }
 // 7. Fetch image search results from Brave Search API
-export async function getImages(
-  message: string
-): Promise<{ doi: string; explanation: string; link: string }[]> {
+export async function getImages(message: string): Promise<{ doi: string; explanation: string; link: string }[]> {
   try {
-    // const response = await fetch(`https://api.search.brave.com/res/v1/images/search?q=${message}&spellcheck=1`, {
     const response = await fetch(
-      `http://127.0.0.1:5000/figures?query=${encodeURIComponent(message)}&figures=${5}`
+      `http://127.0.0.1:5000/figures?query=${encodeURIComponent(message)}&figures=5`
     );
     if (!response.ok) {
-      throw new Error(
-        `Network response was not ok. Status: ${response.status}`
-      );
+      throw new Error(`Network response was not ok. Status: ${response.status}`);
     }
     const data = await response.json();
-    const filteredLinks = data.results.map(async (result: any) => {
+    console.log("API Response Data:", data);  // Logging the data to verify its structure
+
+    // Use Promise.all to resolve all async operations within the map
+    const filteredLinks = await Promise.all(data.results.map(async (result: any) => {
       return {
-        doi: result.doi,
+        doi: `https://api.crossref.org/works/${result.doi}`,
         explanation: result.explanation,
-        link: result.figurePath,
+        link: result.figurePath,  // Now this should correctly reflect the link
       };
-    });
-    return filteredLinks.slice(0, 9);
+    }));
+
+    console.log("Formatted Links:", filteredLinks);  // Logging the links to verify them
+    return filteredLinks;
   } catch (error) {
     console.error("There was a problem with your fetch operation:", error);
     throw error;
   }
 }
+
 // 8. Fetch video search results from Google Serper API
 // export async function getVideos(
 //   message: string
@@ -295,7 +294,7 @@ async function myAction(userMessage: string): Promise<any> {
     //     getVideos(userMessage),
     //     functionCalling(userMessage),
     //   ]);
-      console.log(sources);
+      // console.log(sources);
     streamable.update({ searchResults: sources });
     streamable.update({ images: images });
     // streamable.update({ videos: videos });

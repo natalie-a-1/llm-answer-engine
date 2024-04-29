@@ -1,11 +1,19 @@
 // 1. Import the 'useState' and 'useEffect' hooks from React
 import { useState, useEffect } from "react";
 import { IconPlus, IconClose, IconCopy } from "@/components/ui/icons";
+import { Copy } from "@phosphor-icons/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 // 2. Define the 'SearchResult' interface with properties for 'favicon', 'link', and 'title'
 interface SearchResult {
   title: string;
-  doi: string;
+  doi?: string;
+  citation: string;
   date?: string;
   pId: string;
   id: string;
@@ -34,15 +42,31 @@ const SearchResultsComponent = ({
 
   const handleSourceToggle = (id: string) => {
     setSelectedSources((prev) =>
-      prev.includes(id) ? prev.filter((sourceId) => sourceId !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((sourceId) => sourceId !== id)
+        : [...prev, id]
     );
   };
 
-    // TODO: Implement exporting sources logic
   const exportSelectedSources = () => {
-    console.log("Exporting sources:", selectedSources);
-    // Placeholder for actual export logic
+    console.log("Attempting to export sources for IDs:", selectedSources);
+  
+    const selectedCitations = searchResults
+      .filter(source => selectedSources.includes(source.id))
+      .map(source => source.citation)
+      .join("\n");
+  
+    console.log("Selected Citations: ", selectedCitations);
+  
+    navigator.clipboard.writeText(selectedCitations)
+      .then(() => {
+        console.log("Citations successfully copied to clipboard!");
+      })
+      .catch(err => {
+        console.error("Failed to copy citations to clipboard:", err);
+      });
   };
+  
 
   // 10. Define the 'SearchResultsSkeleton' component to render a loading skeleton
   const SearchResultsSkeleton = () => (
@@ -69,13 +93,16 @@ const SearchResultsComponent = ({
         <h2 className="text-lg font-semibold flex-grow text-black dark:text-white">
           Sources
         </h2>
-        <IconPlus className="w-4 h-4 cursor-pointer text-gray-500 dark:text-gray-400" onClick={() => setShowMore(true)} />
+        <IconPlus
+          className="w-4 h-4 cursor-pointer text-gray-500 dark:text-gray-400"
+          onClick={() => setShowMore(true)}
+        />
       </div>
       <div
         className={`flex flex-wrap mx-1 transition-all duration-500 max-h-[500px] overflow-hidden`}
       >
         {searchResults.length === 0 ? (
-          < SearchResultsSkeleton />
+          <SearchResultsSkeleton />
         ) : (
           searchResults
             .slice(0, showMore ? searchResults.length : 5)
@@ -100,35 +127,74 @@ const SearchResultsComponent = ({
 
         {showMore && (
           <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-40 bg-black opacity-80"></div>
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="fixed inset-0 bg-black opacity-10 transition-opacity" onClick={() => setShowMore(false)}></div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
-              <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Sources</h2>
-                <IconClose className="w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition duration-150 ease-in-out" onClick={() => setShowMore(false)} />
-              </div>
-              <div className="overflow-y-auto p-6 space-y-6 max-h-[70vh]">
-                {searchResults.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-6">
-                    
-                    <input
-                      type="checkbox"
-                      checked={selectedSources.includes(item.id)}
-                      onChange={() => handleSourceToggle(item.id)}
-                      className="form-checkbox h-5 w-5 text-blue-600 mr-4"
-                    />
-                    <div className="flex-grow">
-                      <a href={item.doi} target="_blank" rel="noopener noreferrer" className="font-bold text-xl mb-2 hover:underline text-gray-900 dark:text-gray-100">{item.title}</a>
-                      <p className="text-gray-500 dark:text-gray-400 text-base mb-2">{item.date}</p>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{item.paragraph.length > 200 ? `${item.paragraph.substring(0, 200)}...` : item.paragraph}</p>
+            {/* Backdrop */}
+            <div className="fixed inset-0 z-40 bg-black opacity-80"></div>
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+              <div
+                className="fixed inset-0 bg-black opacity-10 transition-opacity"
+                onClick={() => setShowMore(false)}
+              ></div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
+                <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    Sources
+                  </h2>
+                  {selectedSources.length > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="link"
+                          onClick={exportSelectedSources}
+                        >
+                          <Copy
+                            width="20"
+                            height="20"
+                            className="absolute right-[4rem] w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy citations</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <IconClose
+                    className="w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition duration-150 ease-in-out"
+                    onClick={() => setShowMore(false)}
+                  />
+                </div>
+                <div className="overflow-y-auto p-6 space-y-6 max-h-[70vh]">
+                  {searchResults.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-6">
+                      <input
+                        type="checkbox"
+                        checked={selectedSources.includes(item.id)}
+                        onChange={() => handleSourceToggle(item.id)}
+                        className="form-checkbox h-5 w-5 text-blue-600 mr-4"
+                      />
+                      <div className="flex-grow">
+                        <a
+                          href={item.doi}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-xl mb-2 hover:underline text-gray-900 dark:text-gray-100"
+                        >
+                          {item.title}
+                        </a>
+                        <p className="text-gray-500 dark:text-gray-400 text-base mb-2">
+                          {item.date}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                          {item.paragraph.length > 200
+                            ? `${item.paragraph.substring(0, 200)}...`
+                            : item.paragraph}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
           </>
         )}
       </div>

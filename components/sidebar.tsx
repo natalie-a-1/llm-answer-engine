@@ -195,54 +195,6 @@ const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               <option value="groq-gemma">Groq: Gemma</option>
             </select>
           </div>
-
-          <div className="mb-4 flex items-center space-x-4">
-            <div className="pr-12">
-              <label className="font-semibold">Shopping Search</label>
-              <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                <input
-                  type="checkbox"
-                  checked={settings.toggleSetting}
-                  onChange={(e) =>
-                    handleSettingsChange("toggleSetting", e.target.checked)
-                  }
-                  className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
-                />
-                <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-              </div>
-            </div>
-
-            <div className="pr-12">
-              <label className="font-semibold">Maps Search</label>
-              <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                <input
-                  type="checkbox"
-                  checked={settings.toggleSetting}
-                  onChange={(e) =>
-                    handleSettingsChange("toggleSetting", e.target.checked)
-                  }
-                  className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
-                />
-                <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-              </div>
-            </div>
-
-            <div>
-              <label className="font-semibold">Chart Search</label>
-              <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                <input
-                  type="checkbox"
-                  checked={settings.toggleSetting}
-                  onChange={(e) =>
-                    handleSettingsChange("toggleSetting", e.target.checked)
-                  }
-                  className="toggle-checkbox absolute block w-6 h-6 bg-white border-4 rounded-full appearance-none cursor-pointer"
-                />
-                <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-              </div>
-            </div>
-          </div>
-
           <div className="mb-4">
             <div className="mb-4">
               <label className="block mb-2 font-semibold">
