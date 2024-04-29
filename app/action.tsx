@@ -168,7 +168,7 @@ export async function processAndVectorizeContent(
     throw error;
   }
 }
-// 7. Fetch image search results from Brave Search API
+// 7. Fetch image search results
 export async function getImages(message: string): Promise<{ doi: string; explanation: string; link: string }[]> {
   try {
     const response = await fetch(
@@ -196,7 +196,34 @@ export async function getImages(message: string): Promise<{ doi: string; explana
     throw error;
   }
 }
+// 8. Fetch table search results
+export async function getTables(message: string): Promise<{ doi: string; explanation: string; link: string }[]> {
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:5000/tables?query=${encodeURIComponent(message)}&tables=5`
+    );
+    if (!response.ok) {
+      throw new Error(`Network response was not ok. Status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("API Response Data:", data);  // Logging the data to verify its structure
 
+    // Use Promise.all to resolve all async operations within the map
+    const filteredLinks = await Promise.all(data.results.map(async (result: any) => {
+      return {
+        doi: `https://api.crossref.org/works/${result.doi}`,
+        explanation: result.explanation,
+        link: result.tablePath,  // Now this should correctly reflect the link
+      };
+    }));
+
+    console.log("Formatted Links:", filteredLinks);  // Logging the links to verify them
+    return filteredLinks;
+  } catch (error) {
+    console.error("There was a problem with your fetch operation:", error);
+    throw error;
+  }
+}
 // 8. Fetch video search results from Google Serper API
 // export async function getVideos(
 //   message: string
@@ -282,10 +309,11 @@ async function myAction(userMessage: string): Promise<any> {
   "use server";
   const streamable = createStreamableValue({});
   (async () => {
-    const [images, sources] =
+    const [images, sources, tables] =
     await Promise.all([
       getImages(userMessage),
       getSources(userMessage),
+      getTables(userMessage),
     ]);
     // const [images, sources, videos, condtionalFunctionCallUI] =
     //   await Promise.all([
@@ -297,6 +325,7 @@ async function myAction(userMessage: string): Promise<any> {
       // console.log(sources);
     streamable.update({ searchResults: sources });
     streamable.update({ images: images });
+    streamable.update({ tables: tables });
     // streamable.update({ videos: videos });
     // if (config.useFunctionCalling) {
     //   streamable.update({

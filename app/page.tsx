@@ -28,6 +28,7 @@ import InitialQueries from "@/components/answer/InitialQueries";
 // Sidebar components
 import LLMResponseComponent from "@/components/answer/LLMResponseComponent";
 import ImagesComponent from "@/components/answer/ImagesComponent";
+import TablesComponent from "@/components/answer/TablesComponent";
 import {
   ArrowUp,
   XCircle,
@@ -97,6 +98,7 @@ interface Message {
   content: string;
   userMessage: string;
   images: Image[];
+  tables: Table[];
   // videos: Video[];
   followUp: FollowUp | null;
   isStreaming: boolean;
@@ -113,6 +115,7 @@ interface StreamMessage {
   llmResponse?: string;
   llmResponseEnd?: boolean;
   images?: any;
+  tables?: any;
   videos?: any;
   followUp?: any;
   conditionalFunctionCallUI?: any;
@@ -122,6 +125,11 @@ interface StreamMessage {
   ticker?: string;
 }
 interface Image {
+  doi: string;
+  explanation: string;
+  link: string;
+}
+interface Table {
   doi: string;
   explanation: string;
   link: string;
@@ -250,6 +258,7 @@ export default function Page() {
       userMessage: userMessage,
       content: "",
       images: [],
+      tables: [],
       videos: [],
       followUp: null,
       isStreaming: true,
@@ -291,6 +300,9 @@ export default function Page() {
             }
             if (typedMessage.images) {
               currentMessage.images = [...typedMessage.images];
+            }
+            if (typedMessage.tables) {
+              currentMessage.tables = [...typedMessage.tables];
             }
             // if (typedMessage.videos) {
             //   currentMessage.videos = [...typedMessage.videos];
@@ -365,6 +377,12 @@ export default function Page() {
                   <ImagesComponent
                     key={`images-${index}`}
                     images={message.images}
+                  />
+                )}
+                {message.tables && (
+                  <TablesComponent
+                    key={`tables-${index}`}
+                    tables={message.tables}
                   />
                 )}
                 {/* {message.ticker && message.ticker.length > 0 && (

@@ -136,7 +136,7 @@ const SearchResultsComponent = ({
               ></div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
                 <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-lg font-semibold flex-grow text-black dark:text-white pl-4">
                     Sources
                   </h2>
                   {selectedSources.length > 0 && (
