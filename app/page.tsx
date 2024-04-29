@@ -282,12 +282,12 @@ export default function Page() {
                     ticker={message.ticker}
                   />
                 )}
-                {message.searchResults && (
+                {/* {message.searchResults && (
                   <SearchResultsComponent
                     key={`searchResults-${index}`}
                     searchResults={message.searchResults}
                   />
-                )}
+                )} */}
                 {message.places && message.places.length > 0 && (
                   <MapComponent key={`map-${index}`} places={message.places} />
                 )}
@@ -315,6 +315,12 @@ export default function Page() {
                     shopping={message.shopping}
                   />
                 )}
+                {message.searchResults && (
+                  <SearchResultsComponent
+                    key={`searchResults-${index}`}
+                    searchResults={message.searchResults}
+                  />
+                )}
                 {message.videos && (
                   <VideosComponent
                     key={`videos-${index}`}
@@ -339,9 +345,9 @@ export default function Page() {
         className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4`}
       >
         <div className="max-w-4xl sm:px-4 mx-auto">
-        <div className="max-w-4xl sm:px-4 mx-auto flex justify-center items-center h-screen">
+        {/* <div className="max-w-4xl sm:px-4 mx-auto flex justify-center items-center h-screen">
         <div className="text-center text-4xl font-bold uppercase">DAVAI</div>
-          </div>
+          </div> */}
           {messages.length === 0 && (
             <InitialQueries
               questions={[
