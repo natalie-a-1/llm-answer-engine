@@ -2,7 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
-import { ChatCircleText, Gear, Pulse } from "@phosphor-icons/react";
+import { ChatCircleText, Gear, Pulse, NotePencil } from "@phosphor-icons/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function Sidebar() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -22,9 +27,8 @@ export function Sidebar() {
     <>
       <div className="dark:from-gray-900/10 fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out">
         <div className="flex flex-col bg-gray-800 text-white h-full">
-          {" "}
-          <div className="p-4 flex items-center space-x-2">
-            < Pulse width="25" height="25" className="dark:text-slate-400" />
+          <div className="p-4 flex items-center space-x-2 pt-8">
+            <Pulse width="25" height="25" className="dark:text-slate-400" />
             <span className="text-center uppercase leading-tighttext-lg sm:text-xl lg:text-2xl text-slate-500 dark:text-slate-400">
               DAVAI
             </span>
@@ -60,7 +64,7 @@ export function Sidebar() {
               </li>
             </ul>
           </nav>
-          {/* Settings Button */}
+
           <div className="mt-auto flex justify-between p-4 items-center w-full">
             {/* New Chat Button */}
             <Button
@@ -73,11 +77,24 @@ export function Sidebar() {
               </a>
             </Button>
 
-            <Button variant="outline" asChild onClick={toggleModal}>
-              <a className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-black dark:text-white font-semibold py-2 px-4 rounded shadow">
-                <Gear />
-              </a>
-            </Button>
+          {/* Settings Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative inline-block w-10 mr-2 align-middle select-none text-slate-500 dark:text-slate-400">
+                  <Button variant="outline" asChild onClick={toggleModal}>
+                    <a className="py-2 px-4 dark:bg-slate-800">
+                      <Gear
+                        width="25"
+                        height="25"
+                        className="text-slate-500 dark:text-slate-400"
+                      />
+                    </a>
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Settings</TooltipContent>
+            </Tooltip>
+
           </div>
         </div>
       </div>
@@ -128,7 +145,7 @@ const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center`}
+      className={`fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center items-center`}
     >
       <div className="bg-white dark:bg-gray-800 shadow-lg transition-transform duration-300 ease-in-out transform p-6 w-full max-w-4xl overflow-y-auto rounded-lg">
         <div className="flex items-center justify-between border-b pb-3">
@@ -180,7 +197,7 @@ const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           </div>
 
           <div className="mb-4 flex items-center space-x-4">
-            <div  className="pr-12">
+            <div className="pr-12">
               <label className="font-semibold">Shopping Search</label>
               <div className="relative inline-block w-10 mr-2 align-middle select-none">
                 <input
@@ -195,7 +212,7 @@ const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               </div>
             </div>
 
-            <div  className="pr-12">
+            <div className="pr-12">
               <label className="font-semibold">Maps Search</label>
               <div className="relative inline-block w-10 mr-2 align-middle select-none">
                 <input

@@ -9,7 +9,7 @@ import { Document as DocumentInterface } from "langchain/document";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
 import { config } from "./config";
-import { functionCalling } from "./function-calling";
+// import { functionCalling } from "./function-calling";
 // 2. Determine which embeddings mode and which inference model to use based on the config.tsx. Currently suppport for OpenAI, Groq and partial support for Ollama embeddings and inference
 let openai: OpenAI;
 if (config.useOllamaInference) {
@@ -59,35 +59,24 @@ export async function getSources(
   try {
     // const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(message)}&count=${numberOfPagesToScan}`, {
     const top = 5;
+    let idCounter = 0;
     const response = await fetch(
       `http://127.0.0.1:5000/search?query=${encodeURIComponent(message)}&top_k=${top}`,
-      {
-        //   headers: {
-        //     'Accept': 'application/json',
-        //     'Accept-Encoding': 'gzip',
-        //     "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
-        //   }
-      }
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const jsonResponse = await response.json();
-    // if (!jsonResponse.web || !jsonResponse.web.results) {
-    //   throw new Error('Invalid API response format');
-    // }
+
     const final = jsonResponse.results.map(
       (result: any): SearchResult => ({
-        // title: result.title,
-        // link: result.url,
-        // snippet: result.description,
-        // favicon: result.profile.img
         paragraph: result.paragraph,
         title: result.title,
+        // TODO: Fix doi link
         doi: `https://doi.org/${result.doi}`,
         date: result.date,
         pId: result.pId,
-        id: result.pId,
+        id: `id_${Date.now()}_${++idCounter}`,
       })
     );
     return final;
@@ -127,12 +116,6 @@ export async function get10BlueLinksContents(
   const promises = sources.map(
     async (source): Promise<ContentResult | null> => {
       try {
-        // const response = await fetchWithTimeout(source.doi, {}, 800);
-        // if (!response.ok) {
-        //   throw new Error(`Failed to fetch ${source.doi}. Status: ${response.status}`);
-        // }
-        // const html = await response.text();
-        // const mainContent = extractMainContent(html);
         const mainContent = source.paragraph;
         return { ...source, html: mainContent };
       } catch (error) {
@@ -196,13 +179,6 @@ export async function getImages(
     const response = await fetch(
       `http://127.0.0.1:5000/figures?query=${encodeURIComponent(message)}&figures=${5}`
     );
-    //   method: "GET",
-    //   headers: {
-    //     "Accept": "application/json",
-    //     "Accept-Encoding": "gzip",
-    //     "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY as string
-    //   }
-    // });
     if (!response.ok) {
       throw new Error(
         `Network response was not ok. Status: ${response.status}`
@@ -210,7 +186,6 @@ export async function getImages(
     }
     const data = await response.json();
     const filteredLinks = data.results.map(async (result: any) => {
-      // console.log(result.figurePath);
       return {
         doi: result.doi,
         explanation: result.explanation,
@@ -224,57 +199,57 @@ export async function getImages(
   }
 }
 // 8. Fetch video search results from Google Serper API
-export async function getVideos(
-  message: string
-): Promise<{ imageUrl: string; link: string }[] | null> {
-  const url = "https://google.serper.dev/videos";
-  const data = JSON.stringify({
-    q: message,
-  });
-  const requestOptions: RequestInit = {
-    method: "POST",
-    headers: {
-      "X-API-KEY": process.env.SERPER_API as string,
-      "Content-Type": "application/json",
-    },
-    body: data,
-  };
-  try {
-    const response = await fetch(url, requestOptions);
-    if (!response.ok) {
-      throw new Error(
-        `Network response was not ok. Status: ${response.status}`
-      );
-    }
-    const responseData = await response.json();
-    const validLinks = await Promise.all(
-      responseData.videos.map(async (video: any) => {
-        const imageUrl = video.imageUrl;
-        if (typeof imageUrl === "string") {
-          try {
-            const imageResponse = await fetch(imageUrl, { method: "HEAD" });
-            if (imageResponse.ok) {
-              const contentType = imageResponse.headers.get("content-type");
-              if (contentType && contentType.startsWith("image/")) {
-                return { imageUrl, link: video.link };
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching image link ${imageUrl}:`, error);
-          }
-        }
-        return null;
-      })
-    );
-    const filteredLinks = validLinks.filter(
-      (link): link is { imageUrl: string; link: string } => link !== null
-    );
-    return filteredLinks.slice(0, 9);
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    throw error;
-  }
-}
+// export async function getVideos(
+//   message: string
+// ): Promise<{ imageUrl: string; link: string }[] | null> {
+//   const url = "https://google.serper.dev/videos";
+//   const data = JSON.stringify({
+//     q: message,
+//   });
+//   const requestOptions: RequestInit = {
+//     method: "POST",
+//     headers: {
+//       "X-API-KEY": process.env.SERPER_API as string,
+//       "Content-Type": "application/json",
+//     },
+//     body: data,
+//   };
+//   try {
+//     const response = await fetch(url, requestOptions);
+//     if (!response.ok) {
+//       throw new Error(
+//         `Network response was not ok. Status: ${response.status}`
+//       );
+//     }
+//     const responseData = await response.json();
+//     const validLinks = await Promise.all(
+//       responseData.videos.map(async (video: any) => {
+//         const imageUrl = video.imageUrl;
+//         if (typeof imageUrl === "string") {
+//           try {
+//             const imageResponse = await fetch(imageUrl, { method: "HEAD" });
+//             if (imageResponse.ok) {
+//               const contentType = imageResponse.headers.get("content-type");
+//               if (contentType && contentType.startsWith("image/")) {
+//                 return { imageUrl, link: video.link };
+//               }
+//             }
+//           } catch (error) {
+//             console.error(`Error fetching image link ${imageUrl}:`, error);
+//           }
+//         }
+//         return null;
+//       })
+//     );
+//     const filteredLinks = validLinks.filter(
+//       (link): link is { imageUrl: string; link: string } => link !== null
+//     );
+//     return filteredLinks.slice(0, 9);
+//   } catch (error) {
+//     console.error("Error fetching videos:", error);
+//     throw error;
+//   }
+// }
 // 9. Generate follow-up questions using OpenAI API
 const relevantQuestions = async (sources: SearchResult[]): Promise<any> => {
   return await openai.chat.completions.create({
@@ -308,22 +283,27 @@ async function myAction(userMessage: string): Promise<any> {
   "use server";
   const streamable = createStreamableValue({});
   (async () => {
-    const [images, sources, videos, condtionalFunctionCallUI] =
-      await Promise.all([
-        getImages(userMessage),
-        getSources(userMessage),
-        getVideos(userMessage),
-        functionCalling(userMessage),
-      ]);
+    const [images, sources] =
+    await Promise.all([
+      getImages(userMessage),
+      getSources(userMessage),
+    ]);
+    // const [images, sources, videos, condtionalFunctionCallUI] =
+    //   await Promise.all([
+    //     getImages(userMessage),
+    //     getSources(userMessage),
+    //     getVideos(userMessage),
+    //     functionCalling(userMessage),
+    //   ]);
       console.log(sources);
     streamable.update({ searchResults: sources });
     streamable.update({ images: images });
-    streamable.update({ videos: videos });
-    if (config.useFunctionCalling) {
-      streamable.update({
-        conditionalFunctionCallUI: condtionalFunctionCallUI,
-      });
-    }
+    // streamable.update({ videos: videos });
+    // if (config.useFunctionCalling) {
+    //   streamable.update({
+    //     conditionalFunctionCallUI: condtionalFunctionCallUI,
+    //   });
+    // }
     const html = await get10BlueLinksContents(sources);
     // const html = sources.slice(0,10);
     const vectorResults = await processAndVectorizeContent(html, userMessage);

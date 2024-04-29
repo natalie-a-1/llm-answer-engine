@@ -1,12 +1,6 @@
 // 1. Import the 'useState' and 'useEffect' hooks from React
 import { useState, useEffect } from "react";
-import { IconPlus, IconClose } from "@/components/ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Export } from "@phosphor-icons/react";
+import { IconPlus, IconClose, IconCopy } from "@/components/ui/icons";
 
 // 2. Define the 'SearchResult' interface with properties for 'favicon', 'link', and 'title'
 interface SearchResult {
@@ -118,6 +112,7 @@ const SearchResultsComponent = ({
               <div className="overflow-y-auto p-6 space-y-6 max-h-[70vh]">
                 {searchResults.map((item) => (
                   <div key={item.id} className="flex items-center space-x-6">
+                    
                     <input
                       type="checkbox"
                       checked={selectedSources.includes(item.id)}

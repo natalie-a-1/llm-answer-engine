@@ -28,26 +28,61 @@ import InitialQueries from "@/components/answer/InitialQueries";
 // Sidebar components
 import LLMResponseComponent from "@/components/answer/LLMResponseComponent";
 import ImagesComponent from "@/components/answer/ImagesComponent";
-import VideosComponent from "@/components/answer/VideosComponent";
-// Function calling components
-const MapComponent = dynamic(() => import("@/components/answer/Map"), {
-  ssr: false,
-});
-import MapDetails from "@/components/answer/MapDetails";
-import ShoppingComponent from "@/components/answer/ShoppingComponent";
-import FinancialChart from "@/components/answer/FinancialChart";
-import { ArrowUp, XCircle, UploadSimple, Pulse } from "@phosphor-icons/react";
+import {
+  ArrowUp,
+  XCircle,
+  UploadSimple,
+  Pulse,
+  FilePlus,
+} from "@phosphor-icons/react";
 // OPTIONAL: Use Upstash rate limiting to limit the number of requests per user
 import RateLimit from "@/components/answer/RateLimit";
-
 // For uploading images to llm
 import imageCompression from "browser-image-compression";
 
+// UNINCLUDED: Function calling components
+// import VideosComponent from "@/components/answer/VideosComponent";
+// Function calling components
+// const MapComponent = dynamic(() => import("@/components/answer/Map"), {
+//   ssr: false,
+// });
+// import MapDetails from "@/components/answer/MapDetails";
+// import ShoppingComponent from "@/components/answer/ShoppingComponent";
+// import FinancialChart from "@/components/answer/FinancialChart";
+
+// interface Video {
+//   link: string;
+//   imageUrl: string;
+// }
+// interface Place {
+//   cid: React.Key | null | undefined;
+//   latitude: number;
+//   longitude: number;
+//   title: string;
+//   address: string;
+//   rating: number;
+//   category: string;
+//   phoneNumber?: string;
+//   website?: string;
+// }
+// interface Shopping {
+//   type: string;
+//   title: string;
+//   source: string;
+//   link: string;
+//   price: string;
+//   shopping: any;
+//   position: number;
+//   delivery: string;
+//   imageUrl: string;
+//   rating: number;
+//   ratingCount: number;
+//   offers: string;
+//   productId: string;
+// }
+
 // 2. Set up types
 interface SearchResult {
-  // favicon: string;
-  // link: string;
-  // title: string;
   title: string;
   doi: string;
   date?: string;
@@ -61,14 +96,14 @@ interface Message {
   content: string;
   userMessage: string;
   images: Image[];
-  videos: Video[];
+  // videos: Video[];
   followUp: FollowUp | null;
   isStreaming: boolean;
   searchResults?: SearchResult[];
   conditionalFunctionCallUI?: any;
   status?: string;
-  places?: Place[];
-  shopping?: Shopping[];
+  // places?: Place[];
+  // shopping?: Shopping[];
   ticker?: string | undefined;
 }
 interface StreamMessage {
@@ -81,30 +116,14 @@ interface StreamMessage {
   followUp?: any;
   conditionalFunctionCallUI?: any;
   status?: string;
-  places?: Place[];
-  shopping?: Shopping[];
+  // places?: Place[];
+  // shopping?: Shopping[];
   ticker?: string;
 }
 interface Image {
-  // link: string;
   doi: string;
   explanation: string;
   link: string;
-}
-interface Video {
-  link: string;
-  imageUrl: string;
-}
-interface Place {
-  cid: React.Key | null | undefined;
-  latitude: number;
-  longitude: number;
-  title: string;
-  address: string;
-  rating: number;
-  category: string;
-  phoneNumber?: string;
-  website?: string;
 }
 interface FollowUp {
   choices: {
@@ -112,21 +131,6 @@ interface FollowUp {
       content: string;
     };
   }[];
-}
-interface Shopping {
-  type: string;
-  title: string;
-  source: string;
-  link: string;
-  price: string;
-  shopping: any;
-  position: number;
-  delivery: string;
-  imageUrl: string;
-  rating: number;
-  ratingCount: number;
-  offers: string;
-  productId: string;
 }
 
 export default function Page() {
@@ -177,7 +181,6 @@ export default function Page() {
 
     setFiles(compressedFiles);
     setImagePreviews(newImagePreviews);
-    // setInputValue(prev => `${prev} ${fileNames.join(', ')}`);
   };
 
   const removeImagePreview = (index: number) => {
@@ -250,8 +253,8 @@ export default function Page() {
       followUp: null,
       isStreaming: true,
       searchResults: [] as SearchResult[],
-      places: [] as Place[],
-      shopping: [] as Shopping[],
+      // places: [] as Place[],
+      // shopping: [] as Shopping[],
       status: "",
       ticker: undefined,
     };
@@ -288,25 +291,25 @@ export default function Page() {
             if (typedMessage.images) {
               currentMessage.images = [...typedMessage.images];
             }
-            if (typedMessage.videos) {
-              currentMessage.videos = [...typedMessage.videos];
-            }
+            // if (typedMessage.videos) {
+            //   currentMessage.videos = [...typedMessage.videos];
+            // }
             if (typedMessage.followUp) {
               currentMessage.followUp = typedMessage.followUp;
             }
             // Optional Function Calling + Conditional UI
             if (typedMessage.conditionalFunctionCallUI) {
               const functionCall = typedMessage.conditionalFunctionCallUI;
-              if (functionCall.type === "places") {
-                currentMessage.places = functionCall.places;
-              }
-              if (functionCall.type === "shopping") {
-                currentMessage.shopping = functionCall.shopping;
-              }
-              if (functionCall.type === "ticker") {
-                console.log("ticker", functionCall);
-                currentMessage.ticker = functionCall.data;
-              }
+              // if (functionCall.type === "places") {
+              //   currentMessage.places = functionCall.places;
+              // }
+              // if (functionCall.type === "shopping") {
+              //   currentMessage.shopping = functionCall.shopping;
+              // }
+              // if (functionCall.type === "ticker") {
+              //   console.log("ticker", functionCall);
+              //   currentMessage.ticker = functionCall.data;
+              // }
             }
           }
           return messagesCopy;
@@ -333,21 +336,6 @@ export default function Page() {
                 {message.type === "userMessage" && (
                   <UserMessageComponent message={message.userMessage} />
                 )}
-                {message.ticker && message.ticker.length > 0 && (
-                  <FinancialChart
-                    key={`financialChart-${index}`}
-                    ticker={message.ticker}
-                  />
-                )}
-                {/* {message.searchResults && (
-                  <SearchResultsComponent
-                    key={`searchResults-${index}`}
-                    searchResults={message.searchResults}
-                  />
-                )} */}
-                {message.places && message.places.length > 0 && (
-                  <MapComponent key={`map-${index}`} places={message.places} />
-                )}
                 <LLMResponseComponent
                   llmResponse={message.content}
                   currentLlmResponse={currentLlmResponse}
@@ -372,19 +360,34 @@ export default function Page() {
                     searchResults={message.searchResults}
                   />
                 )}
-                {message.videos && (
-                  <VideosComponent
-                    key={`videos-${index}`}
-                    videos={message.videos}
-                  />
-                )}
                 {message.images && (
                   <ImagesComponent
                     key={`images-${index}`}
                     images={message.images}
                   />
                 )}
-                {message.shopping && message.shopping.length > 0 && (
+                {/* {message.ticker && message.ticker.length > 0 && (
+                  <FinancialChart
+                    key={`financialChart-${index}`}
+                    ticker={message.ticker}
+                  />
+                )} */}
+                {/* {message.searchResults && (
+                  <SearchResultsComponent
+                    key={`searchResults-${index}`}
+                    searchResults={message.searchResults}
+                  />
+                )} */}
+                {/* {message.places && message.places.length > 0 && (
+                  <MapComponent key={`map-${index}`} places={message.places} />
+                )} */}
+                {/* {message.videos && (
+                  <VideosComponent
+                    key={`videos-${index}`}
+                    videos={message.videos}
+                  />
+                )} */}
+                {/* {message.shopping && message.shopping.length > 0 && (
                   <ShoppingComponent
                     key={`shopping-${index}`}
                     shopping={message.shopping}
@@ -392,7 +395,7 @@ export default function Page() {
                 )}
                 {message.places && message.places.length > 0 && (
                   <MapDetails key={`map-${index}`} places={message.places} />
-                )}
+                )} */}
               </div>
             </div>
           ))}
@@ -405,8 +408,12 @@ export default function Page() {
           {messages.length === 0 && (
             <>
               <div className="max-w-4xl sm:px-4 mx-auto flex flex-col justify-end items-center h-screen pb-[10rem]">
-                <Pulse width="45" height="45" />
-                <div className="pl-2 text-center text-4xl uppercase leading-tight">
+                <Pulse
+                  width="45"
+                  height="45"
+                  className="text-slate-500 dark:text-slate-400"
+                />
+                <div className="pl-2 text-center text-4xl uppercase leading-tight text-slate-500 dark:text-slate-400">
                   DAVAI
                 </div>
               </div>
@@ -422,6 +429,7 @@ export default function Page() {
               />
             </>
           )}
+
           <form
             ref={formRef}
             onSubmit={async (e: FormEvent<HTMLFormElement>) => {
@@ -464,7 +472,7 @@ export default function Page() {
                 ))}
               </div>
 
-              <div className="relative left-4 top-11">
+              <div className="absolute left-3 top-3">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -473,11 +481,16 @@ export default function Page() {
                       variant="link"
                       size="icon"
                     >
-                      <UploadSimple width="20" height="20" />
+                      <FilePlus
+                        width="25"
+                        height="25"
+                        className="text-slate-500 dark:text-slate-400"
+                      />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Upload</TooltipContent>
                 </Tooltip>
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -494,7 +507,7 @@ export default function Page() {
                   setInputValue(e.currentTarget.value)
                 }
                 placeholder="Send a message..."
-                className="w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pl-[60px] pr-[60px]"
+                className="w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pl-16 pr-16"
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
@@ -506,8 +519,25 @@ export default function Page() {
                   setInputValue(e.target.value)
                 }
               />
+
               <ChatScrollAnchor trackVisibility={true} />
-              <div className="absolute right-4 top-10">
+              <div className="absolute right-8 pr-6 top-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative inline-block w-10 mr-2 align-middle select-none text-slate-500 dark:text-slate-400">
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={(e) => console.log(e)}
+                        className="toggle-checkbox absolute block w-6 h-6 text-slate-500 dark:text-slate-400 border-4 rounded-full appearance-none cursor-pointer"
+                      />
+                      <label className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Copilot</TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="absolute right-4 top-3">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -515,7 +545,7 @@ export default function Page() {
                       size="icon"
                       disabled={inputValue === ""}
                     >
-                      <ArrowUp />
+                      <ArrowUp width="20" height="20" />
                       <span className="sr-only">Send message</span>
                     </Button>
                   </TooltipTrigger>
